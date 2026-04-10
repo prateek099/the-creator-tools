@@ -12,19 +12,30 @@ paths:
 ```
 ct-frontend/src/
 ├── api/
-│   ├── client.ts            # Axios instance (baseURL from VITE_API_URL)
+│   ├── client.ts            # Axios instance + Bearer interceptor + auto-refresh
+│   ├── useAuth.ts           # useMe, useLogin, useRegister, useLogout
 │   └── useUsers.ts          # React Query hooks per resource
-├── components/              # Shared reusable UI components
-├── pages/                   # Route-level components
-├── types/                   # Shared TypeScript interfaces
-└── main.tsx                 # App entrypoint — QueryClient + Router setup
+├── components/
+│   ├── Navbar.tsx           # Top bar with user info + logout
+│   └── ProtectedRoute.tsx   # Redirects to /login if unauthenticated
+├── context/
+│   └── AuthContext.tsx      # AuthProvider + useAuth() hook
+├── pages/
+│   ├── LoginPage.tsx        # Login + Register (toggled, single page)
+│   └── UsersPage.tsx        # Protected page
+├── types/
+│   ├── auth.ts              # LoginRequest, TokenResponse, AuthUser
+│   └── user.ts              # User, UserCreate
+└── main.tsx                 # QueryClient + Router + AuthProvider wiring
 ```
 
-## Code Style
-- Prettier + ESLint enforced
-- 2-space indentation, double quotes in JSX
-- No `any` type — use proper types or `unknown`
-- `noUnusedLocals` and `noUnusedParameters` enabled
+## Auth Rules
+- Tokens stored in `localStorage` (`access_token`, `refresh_token`)
+- `client.ts` attaches `Authorization: Bearer <token>` on every request
+- On 401, auto-refresh via `refresh_token` then retry once — redirect to `/login` if refresh fails
+- Use `useAuth()` (from `AuthContext`) to read `user`, `isAuthenticated`, `logout`
+- Use `<ProtectedRoute>` to guard any route that requires login
+- After login/register, redirect to `location.state.from` (or `/`)
 
 ## Component Rules
 - Functional components only — no class components
@@ -34,13 +45,20 @@ ct-frontend/src/
 
 ## Data Fetching
 - All API calls via React Query hooks in `src/api/`
-- Never call `axios` / `fetch` directly inside components
+- **Never** call `axios`/`fetch` directly inside components
 - Invalidate queries after mutations via `queryClient.invalidateQueries`
-- API base URL from `import.meta.env.VITE_API_URL`
+- Auth-specific queries use key `["auth", "me"]` — invalidate on login/logout
+
+## Code Style
+- Prettier + ESLint enforced
+- 2-space indentation, double quotes in JSX
+- No `any` type — use proper types or `unknown`
+- `noUnusedLocals` and `noUnusedParameters` enabled
 
 ## Environment Variables
 - Prefix all Vite env vars with `VITE_`
-- Never hardcode API URLs — always read from env
+- `VITE_API_URL` — backend base URL (default `/api/v1` via Vite proxy)
+- Never hardcode API URLs
 
 ## Testing
 - Vitest + React Testing Library
