@@ -1,0 +1,33 @@
+services:
+  # ── Backend (FastAPI) ────────────────────────────────────────────────────────
+  - type: web
+    name: ct-backend
+    runtime: docker
+    dockerfilePath: ./ct-backend/Dockerfile
+    dockerContext: ./ct-backend
+    dockerCommand: "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    healthCheckPath: /health
+    envVars:
+      - key: DEBUG
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ct-db
+          property: connectionString
+
+  # ── Frontend (React → nginx) ─────────────────────────────────────────────────
+  - type: web
+    name: ct-frontend
+    runtime: docker
+    dockerfilePath: ./ct-frontend/Dockerfile
+    dockerContext: ./ct-frontend
+    dockerCommand: "nginx -g 'daemon off;'"
+    envVars:
+      - key: VITE_API_URL
+        value: https://ct-backend.onrender.com/api/v1
+
+  # ── Database ──────────────────────────────────────────────────────────────────
+databases:
+  - name: ct-db
+    databaseName: creator_tools
+    user: ct_user

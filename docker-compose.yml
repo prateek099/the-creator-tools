@@ -1,0 +1,53 @@
+services:
+  backend:
+    build:
+      context: ./ct-backend
+      target: development       # hot-reload + debugpy
+    ports:
+      - "8000:8000"
+      - "5678:5678"             # VS Code debugpy attach
+    volumes:
+      - ./ct-backend:/app       # live code sync
+      - /app/.venv              # preserve Poetry venv inside container
+    env_file:
+      - ./ct-backend/.env
+    environment:
+      - DEBUG=true
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./ct-frontend
+      target: development       # Vite dev server with HMR
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./ct-frontend:/app
+      - /app/node_modules       # preserve node_modules inside container
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ct_user
+      POSTGRES_PASSWORD: ct_pass
+      POSTGRES_DB: creator_tools
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ct_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

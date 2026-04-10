@@ -1,0 +1,6 @@
+[submodule "ct-backend"]
+	path = ct-backend
+	url = ../ct-backend
+[submodule "ct-frontend"]
+	path = ct-frontend
+	url = ../ct-frontend
