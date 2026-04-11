@@ -6,10 +6,12 @@ paths:
 # Backend Rules — FastAPI + Poetry
 
 ## Stack
-- Python 3.12, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2
-- `python-jose[cryptography]` — JWT, `passlib[bcrypt]` — password hashing
-- `loguru` — structured logging, `slowapi` — rate limiting
+- Python **3.10+** (3.10 · 3.11 · 3.12), FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2
+- `python-jose[cryptography]` — JWT, `bcrypt` (direct, no passlib) — password hashing
+- `psycopg[binary] ^3.1` — PostgreSQL driver (psycopg3); SQLite used by default in dev
+- `loguru` — structured logging, `slowapi` — rate limiting (200 req/min)
 - Dependency management via **Poetry only** — never use `pip install` directly
+- `passlib` is **not used** — it is incompatible with `bcrypt >= 4.x`; use `bcrypt` directly
 
 ## Project Layout
 ```
@@ -74,6 +76,11 @@ ct-backend/
 - Type hints required on all signatures, `async def` for all routes
 - Google-style docstrings for public functions
 
+## Commenting Guidelines
+- All comments in Python code should start with " Prateek: "
+- Use inline comments sparingly and only when the code is not self-explanatory
+- Ensure comments are concise and add value to the understanding of the code
+
 ## API Patterns
 - Routes in `app/api/routes/`, registered via `APIRouter`
 - Always use Pydantic schemas for request body + `response_model`
@@ -88,3 +95,4 @@ ct-backend/
 ## Debugging
 - `debugpy` starts when `DEBUG=true`, listens on `0.0.0.0:5678`
 - Attach VS Code via `.vscode/launch.json` → "Attach to ct-backend (Docker)"
+
