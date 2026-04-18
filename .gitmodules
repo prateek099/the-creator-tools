@@ -1,6 +1,8 @@
 [submodule "ct-backend"]
 	path = ct-backend
 	url = https://github.com/prateek099/ct-backend.git
+	branch = main
 [submodule "ct-frontend"]
 	path = ct-frontend
 	url = https://github.com/prateek099/ct-frontend.git
+	branch = main
