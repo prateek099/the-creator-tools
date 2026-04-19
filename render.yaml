@@ -24,7 +24,7 @@ services:
     dockerCommand: "nginx -g 'daemon off;'"
     envVars:
       - key: VITE_API_URL
-        value: https://ct-backend.onrender.com/api/v1
+        value: https://ct-backend-x0j7.onrender.com/api/v1
 
   # ── Database ──────────────────────────────────────────────────────────────────
 databases:
