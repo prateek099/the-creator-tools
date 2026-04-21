@@ -466,12 +466,13 @@ the-creator-tools/
 │   │   │   └── routes/          # auth, users, login, video_idea_gen, script_generator,
 │   │   │                        # title_suggestor, seo_description, youtube
 │   │   ├── api_wrappers/        # open_ai.py (openai_call + openai_wrapper), youtube.py
-│   │   ├── core/                # config (dotenv), database, security, logging, exceptions
+│   │   ├── core/                # config (dotenv), database, security, logging, exceptions, messages
 │   │   ├── middleware/          # request_id, timing, logging
 │   │   ├── models/              # user.py, llm_usage.py
-│   │   ├── schemas/             # Pydantic schemas
+│   │   ├── prompts/             # ideas.py, script.py, title.py, seo.py (LLM prompt templates)
+│   │   ├── schemas/             # Pydantic schemas (incl. ai.py with unified ChannelContext)
 │   │   └── services/            # auth_service, user_service, llm_tracker
-│   ├── tests/
+│   ├── tests/                   # includes test_ai_routes.py + test_deps.py
 │   ├── Dockerfile
 │   ├── pyproject.toml
 │   └── README.md
@@ -479,12 +480,18 @@ the-creator-tools/
 ├── ct-frontend/                 # Git submodule → github.com/prateek099/ct-frontend
 │   ├── src/
 │   │   ├── api/                 # client.ts (axios + cookie Bearer), useAuth, useWorkflow
-│   │   ├── components/          # Navbar, ProtectedRoute, UserWidget (fixed logout)
+│   │   ├── components/
+│   │   │   ├── auth/            # ProtectedRoute
+│   │   │   ├── layout/          # AppShell, Sidebar, TopBar, Navbar, PageHeader
+│   │   │   ├── pipeline/        # PipelineStepper, BackgroundGenerationBanner,
+│   │   │   │                    # NoIdeaSelectedCard, ContextBanner
+│   │   │   └── shared/          # Icon, UserCard, UserWidget
 │   │   ├── context/             # AuthContext, WorkflowContext
-│   │   ├── pages/               # LoginPage, HomePage, VideoIdeaGenerator,
-│   │   │                        # ScriptGenerator, TitleSuggestor, SeoDescription,
-│   │   │                        # WorkInProgress, UsersPage
-│   │   └── types/               # auth.ts, user.ts, workflow.ts
+│   │   ├── pages/
+│   │   │   ├── idea/            # IdeaSidebar
+│   │   │   ├── script/          # FlavorPicker, ReviewPanel
+│   │   │   └── *.tsx            # Route-level pages (one per route)
+│   │   └── types/               # auth.ts, user.ts, workflow.ts, api.ts (ApiError helper)
 │   ├── Dockerfile
 │   ├── nginx.conf
 │   └── package.json
