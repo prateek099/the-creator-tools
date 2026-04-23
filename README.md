@@ -215,6 +215,57 @@ Port `5678` on the host is mapped to `debugpy` inside the container.
 
 ---
 
+## Feature Implementation Status
+
+Frontend pages are split into three buckets: **implemented** (real API + context wiring), **partial** (real backend, some hardcoded UI), and **pending** (UI mock only). Pending pages are prefixed `todo_*` in `ct-frontend/src/pages/` so they're easy to spot — the routes still work for demos, but the handlers are no-ops.
+
+### ✅ Implemented
+
+| Page | Route | What it does |
+|------|-------|--------------|
+| `DashboardPage` | `/` | In-flight + published projects; loads project into workflow |
+| `LoginPage` / `SignupPage` / `GoogleCallback` | `/login` · `/signup` · `/oauth/google/callback` | Email/password + Google OAuth |
+| `VideoIdeaGenerator` (T1) | `/idea` | Channel fetch, idea generation, saved channels sidebar |
+| `ScriptGenerator` (T2) | `/script` | Parallel variant generation with streaming/cancel |
+| `TitleSuggestor` (T3) | `/title` | CTR-ranked titles + A/B tests |
+| `SeoDescription` (T4) | `/description` | Description, hashtags, tags |
+| `PublishPage` | `/publish/:id` | Bundles pipeline output and publishes |
+| `TrendingFinder` (T7) | `/trending` | YouTube trending by region/category |
+| `ChannelStats` (T8) | `/stats` | Subs/views/engagement + top videos |
+| `ContentCalendar` (T10) | `/calendar` | Event CRUD |
+| `ThumbnailDownloader` (T17) | `/thumbnail-downloader` | Download YouTube thumbnails |
+| `SubtitlesDownloader` (T18) | `/subtitles-downloader` | SRT / VTT / TXT export |
+| `AdminPanel` (T9) | `/admin` | Prompt override CRUD + history |
+| `UsersPage` | `/users` | User management |
+
+### 🟡 Partial — real backend, some hardcoded UI
+
+| Page | Route | What's real | What's faked |
+|------|-------|-------------|--------------|
+| `ThumbnailLab` (T5) | `/thumbnail` | Saves thumbnail design JSON via `useUpdateProject` | `CTR_DATA` + `DNA_BARS` static — no CTR prediction model yet |
+
+### ⏳ Pending — `todo_*` prefix (pure UI mocks)
+
+| Page | Route | What's missing |
+|------|-------|----------------|
+| `todo_VideoGenerator` (T13) | `/video` | No video render pipeline — "Generate" just flips local state |
+| `todo_Voiceover` (T11) | `/voiceover` | No TTS backend; hardcoded voices; fake waveform |
+| `todo_ReviewScript` (T12) | `/review` | No scoring engine; checklist + score `78` are static |
+| `todo_Repurpose` (T14) | `/repurpose` | No repurpose mutation; outputs hardcoded; button has no handler |
+| `todo_LinkInBio` (T15) | `/linkinbio` | No persistence; "Publish" has no handler |
+| `todo_MyShop` (T16) | `/shop` | No product/revenue backend; all data hardcoded |
+| `todo_CopyrightChecker` (T19) | `/copyright` | No scan service; results + advice hardcoded |
+| `todo_HomePage` | — | Orphan, superseded by `DashboardPage` |
+| `todo_WorkInProgress` | — | Orphan placeholder (uses Tailwind — inconsistent with codebase) |
+
+### Summary
+
+- **Core pipeline (T1–T4 + publish):** 100% end-to-end
+- **Research / Plan / Admin / Utilities (T7–T10, T17, T18, admin, users):** fully implemented
+- **Create / Improve / Publish extras (T11–T16, T19):** UI mockups — renamed to `todo_*`, awaiting backend work
+
+---
+
 ## API Endpoints
 
 ### Auth (public)
