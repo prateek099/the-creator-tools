@@ -8,7 +8,7 @@ paths:
 ## Stack
 - Python **3.10+** (3.10 · 3.11 · 3.12), FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2
 - `python-jose[cryptography]` — JWT, `bcrypt` (direct, no passlib) — password hashing
-- `psycopg[binary] ^3.1` — PostgreSQL driver (psycopg3); SQLite used by default in dev
+- `psycopg[binary] ^3.1` — PostgreSQL driver (psycopg3); Postgres-only at runtime (Render in prod, docker-compose `db` in dev). Tests use SQLite for isolation.
 - `loguru` — structured logging, `slowapi` — rate limiting (200 req/min)
 - Dependency management via **Poetry only** — never use `pip install` directly
 - `passlib` is **not used** — it is incompatible with `bcrypt >= 4.x`; use `bcrypt` directly

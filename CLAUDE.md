@@ -34,15 +34,17 @@ docker compose down -v         # stop + wipe DB
 
 ### Backend
 ```bash
-docker compose exec backend poetry run pytest               # run tests
-docker compose exec backend poetry add <pkg>                # add package
-docker compose exec backend poetry run alembic upgrade head # run migrations
+docker compose exec backend poetry run pytest                                         # run all tests
+docker compose exec backend poetry run pytest tests/path/to/test_file.py::test_name -vv  # single test
+docker compose exec backend poetry add <pkg>                                          # add package
+docker compose exec backend poetry run alembic upgrade head                           # run migrations
 ```
 
 ### Frontend
 ```bash
-docker compose exec frontend npm run test     # run tests
-docker compose exec frontend npm install <pkg> # add package
+docker compose exec frontend npm run test                  # run all tests
+docker compose exec frontend npm run test -- <pattern>     # run tests matching pattern
+docker compose exec frontend npm install <pkg>             # add package
 ```
 
 ## Architecture
@@ -56,7 +58,7 @@ docker compose exec frontend npm install <pkg> # add package
 - Frontend: Vite dev server on `http://localhost:5173`
   - Vite proxies `/api` → `http://backend:8000` inside Docker
   - Auth context + ProtectedRoute + auto token refresh interceptor
-- DB: Postgres on `localhost:5432` (SQLite default in dev)
+- DB: Postgres-only at runtime. Local dev uses the docker-compose `db` service (Postgres 16 on `localhost:5432`); prod is Postgres 15 on Render. Tests still use SQLite (`tests/conftest.py`) for isolation and speed.
 - Debug: debugpy on port `5678` when `DEBUG=true` — attach via VS Code
 
 ## Conventions
@@ -68,7 +70,41 @@ docker compose exec frontend npm install <pkg> # add package
 - PRs require passing tests before merge
 - Backend uses `bcrypt` directly for password hashing (passlib removed — incompatible with bcrypt 5.x)
 
+## Recurring backend patterns
+
+These conventions span many files — follow them when adding new routes/services.
+
+- **Auth dependencies** (`app/api/deps.py`): every protected route picks one of `get_current_user`, `get_optional_user`, or `require_admin`. `get_optional_user` returns `None` for the demo token (`sub='demo'`) — that is how unauthenticated demo access works, so do not block on `user is None` unless you mean to.
+- **All LLM calls go through `track_openai_call()`** (`app/services/llm_tracker.py`). Never call `openai_call()` directly from a route — it bypasses the LLMUsage audit row (user, endpoint, tokens, duration, status) which is persisted in a `finally` block even on failure.
+- **Prompt overrides**: AI routes fetch a DB-backed admin prompt override before building prompts. The pattern is consistent across `video_idea_gen`, `script_generator`, `title_suggestor`, `seo_description` — copy from one of these when adding a new generation route.
+- **Errors**: raise `AppError` subclasses (`UnauthorizedError`, `ForbiddenError`, `BadRequestError`, `NotFoundError`). The global handler serialises to `{"error": {"code", "detail"}, "request_id"}`. Do not return ad-hoc `HTTPException`s with custom shapes.
+
+## Recurring frontend patterns
+
+- **React Query mutations** for the AI pipeline live in `src/api/useWorkflow.ts` (and sibling `useX.ts` files). Don't scatter `client.post` calls across components — add a hook.
+- **401 auto-refresh** is handled in `src/api/client.ts` (queues concurrent requests, swaps tokens, retries). Don't add manual refresh logic in components.
+- **Workflow autosave** listens via `useMutationState` in `src/context/WorkflowContext.tsx`. New pipeline steps should hook into that listener rather than implementing their own save.
+- **Error rendering**: use `getApiErrorMessage(err, fallback)` from `src/types/api.ts` to extract `error.detail` from the standard backend error shape.
+
+## Further reading
+
+- [docs/SYSTEM.md](docs/SYSTEM.md) — deep architecture: layering, services, roadmap.
+- [docs/project-flow.md](docs/project-flow.md) — end-to-end request trace (frontend → backend → LLM → DB) using the `/idea` flow.
+
 ## Submodule Workflow
+
+The [Makefile](Makefile) wraps the common submodule operations — prefer it over the manual commands.
+
+```bash
+make sync                                   # pull both submodules to latest main
+make push-backend  msg="feat: ..."          # commit+push ct-backend, then bump pointer
+make push-frontend msg="feat: ..."          # commit+push ct-frontend, then bump pointer
+make push-all      msg="feat: ..."          # both submodules + bump pointer
+make branch-backend  b=feat/my-feature      # create+push feature branch in ct-backend
+make branch-frontend b=feat/my-feature      # create+push feature branch in ct-frontend
+```
+
+Manual flow (when Make isn't handy or you need finer control):
 
 ```bash
 # Update both submodules to latest from GitHub
